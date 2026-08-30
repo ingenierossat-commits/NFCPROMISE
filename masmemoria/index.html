@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="MasMemoria">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="ICONS/icon192.png">
+<title>MasMemoria</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0d0d;
+  --ink: #f0ede6;
+  --ink2: #757575;
+  --ink3: #2e2c2a;
+  --inkt: #757575;
+  --paper: #161614;
+  --paper2: #1e1e1b;
+  --amber: #e8a030;
+  --red: #e05555;
+  --green: #4caf7d;
+  --blue: #5b9bd5;
+  --r: 12px;
+  --mono: 'IBM Plex Mono', monospace;
+  --serif: 'Instrument Serif', serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 13px;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.hdr {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--ink3);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hdr-icon {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1.5px solid var(--blue);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.hdr-title {
+  font-family: 'Georgia', serif;
+  font-size: 18px;
+  letter-spacing: 3px;
+  color: var(--ink);
+}
+.hdr-counter {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--inkt);
+  border: 1px solid var(--ink3);
+  border-radius: 20px;
+  padding: 4px 10px;
+}
+.hdr-counter.full { color: var(--red); border-color: var(--red); }
+
+.toast {
+  position: fixed;
+  top: 20px; left: 50%; transform: translateX(-50%) translateY(-8px);
+  background: var(--paper2);
+  border: 1px solid var(--ink3);
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 13px;
+  color: var(--ink);
+  opacity: 0;
+  transition: opacity 0.25s, transform 0.25s;
+  z-index: 999;
+  max-width: 90vw;
+  text-align: center;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.ok   { border-color: var(--green); color: var(--green); }
+.toast.err  { border-color: var(--red);   color: var(--red);   }
+.toast.info { border-color: var(--amber); color: var(--amber); }
+
+.main {
+  flex: 1;
+  padding: 20px 16px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 560px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.section {
+  background: var(--paper);
+  border: 1px solid var(--ink3);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.section-header {
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--ink3);
+  display: flex; align-items: center; gap: 10px;
+}
+.section-label {
+  font-size: 11px; font-weight: 500; letter-spacing: 2px; flex: 1; color: var(--inkt);
+}
+.label-guardar { color: var(--green); }
+.label-recordar { color: var(--blue); }
+.label-borrar   { color: var(--red); }
+.section-body { padding: 10px 12px; }
+
+.input-wrap { display: flex; gap: 8px; align-items: flex-end; }
+.textarea {
+  flex: 1; background: var(--paper2); border: 1px solid var(--ink3);
+  border-radius: 8px; color: var(--ink); padding: 10px 12px;
+  font-family: var(--mono); font-size: 13px; resize: none; max-height: 100px;
+}
+.textarea:focus { outline: none; border-color: var(--blue); }
+.btn-group { display: flex; gap: 6px; }
+.btn-action, .btn-mic, .btn-ok-r {
+  border: none; border-radius: 8px; width: 38px; height: 38px;
+  background: var(--paper2); color: var(--ink); font-size: 15px; cursor: pointer;
+  flex-shrink: 0;
+}
+.btn-send-g { background: var(--green); color: #0d0d0d; }
+.btn-send-r { background: var(--blue); color: #0d0d0d; }
+.btn-send-b { background: var(--red); color: #0d0d0d; }
+.btn-mic.grabando { background: var(--red); color: #fff; }
+.btn-ok-r { display: none; width: auto; padding: 0 12px; }
+.btn-ok-r.activo { display: block; }
+.hint-sec { font-size: 11px; color: var(--inkt); margin-top: 8px; }
+
+.respuesta { display: none; margin-top: 10px; font-size: 13px; line-height: 1.6; }
+.respuesta.show { display: block; }
+
+.resultados { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.res-item {
+  display: flex; gap: 8px; align-items: flex-start;
+  background: var(--paper2); border-radius: 8px; padding: 8px 10px;
+}
+.res-item.checked { opacity: 0.5; }
+.res-text { font-size: 12.5px; }
+.res-fecha { font-size: 10px; color: var(--inkt); margin-top: 2px; }
+.btn-borrar-sel {
+  margin-top: 10px; width: 100%; padding: 10px; border: none; border-radius: 8px;
+  background: var(--red); color: #fff; font-family: var(--mono); font-size: 12.5px; cursor: pointer;
+}
+.btn-borrar-sel:disabled { opacity: 0.4; }
+mark { background: var(--amber); color: #0d0d0d; border-radius: 3px; padding: 0 2px; }
+
+.footer { text-align: center; font-size: 10px; color: var(--ink3); padding: 16px; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-icon">🧠</div>
+  <div class="hdr-title">MasMemoria</div>
+  <div class="hdr-counter" id="hdrCounter">0/10</div>
+</div>
+
+<div class="main">
+
+  <div class="section">
+    <div class="section-header"><span class="section-label label-guardar">GUARDAR</span></div>
+    <div class="section-body">
+      <div class="input-wrap">
+        <textarea class="textarea" id="txtGuardar" rows="2"
+          placeholder="Escribe o di algo para recordar..."
+          oninput="autoResize(this)" onkeydown="keyGuardar(event)"
+          onfocus="ocultarPlaceholder(this)" onblur="restaurarPlaceholder(this,'Escribe o di algo para recordar...')"></textarea>
+        <div class="btn-group">
+          <button class="btn-action btn-send-g" onclick="accionGuardar()" title="Guardar">↑</button>
+          <button class="btn-mic" id="micGuardar" onclick="toggleMic('guardar')" title="Voz">🎙</button>
+        </div>
+      </div>
+      <div class="hint-sec">Máximo 10 recuerdos. Escribe "Fecha. dentista el 15 de abril" para un aviso con fecha.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="section-label label-recordar">RECORDAR</span></div>
+    <div class="section-body">
+      <div class="input-wrap">
+        <textarea class="textarea" id="txtRecordar" rows="2"
+          placeholder="¿Qué quieres recordar?"
+          oninput="autoResize(this)" onkeydown="keyRecordar(event)"
+          onfocus="ocultarPlaceholder(this)" onblur="restaurarPlaceholder(this,'¿Qué quieres recordar?')"></textarea>
+        <div class="btn-group">
+          <button class="btn-action btn-send-r" onclick="accionRecordar()" title="Buscar">?</button>
+          <button class="btn-mic" id="micRecordar" onclick="toggleMic('recordar')" title="Voz">🎙</button>
+          <button class="btn-ok-r" id="btnOkRecordar" onclick="cerrarRespuesta()" title="OK">OK</button>
+        </div>
+      </div>
+      <div class="respuesta" id="respuesta"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="section-label label-borrar">BORRAR</span></div>
+    <div class="section-body">
+      <div class="input-wrap">
+        <textarea class="textarea" id="txtBorrar" rows="2"
+          placeholder="Escribe una palabra para buscar y borrar"
+          oninput="autoResize(this)" onkeydown="keyBorrar(event)"
+          onfocus="ocultarPlaceholder(this)" onblur="restaurarPlaceholder(this,'Escribe una palabra para buscar y borrar')"></textarea>
+        <div class="btn-group">
+          <button class="btn-action btn-send-b" onclick="accionBorrar()" title="Buscar">🔍</button>
+          <button class="btn-mic" id="micBorrar" onclick="toggleMic('borrar')" title="Voz">🎙</button>
+        </div>
+      </div>
+      <div class="hint-sec">Escribe o di una palabra y te mostraré las entradas relacionadas.</div>
+      <div class="resultados" id="resultados"></div>
+      <button class="btn-borrar-sel" id="btnBorrarSel" onclick="borrarSeleccionadas()" disabled style="display:none">
+        Borrar seleccionadas
+      </button>
+    </div>
+  </div>
+
+  <div class="footer" id="footer">DATOS PRIVADOS · SOLO TÚ LOS VES</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module" src="app.js"></script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
